@@ -4,25 +4,27 @@ import {BookList} from './components/BooksList';
 import { Link } from 'react-router-dom';
 import { useLocation, useParams } from 'react-router-dom';
 
-const initialState = {
+import Button from '@mui/material/Button';
+import { useDispatch, useSelector } from 'react-redux';
+import { ReducerTypes } from './redux/BookReducer';
+import { State } from './redux/initialState';
 
-}
-const ejReducer = (state: any, action: any) => {
-    return state;
-}
+import { Form, Input, Checkbox, List } from 'antd';
 
 const Books = (props: any) => {
     const [books, setBooks] = useState<Array<BookList>>([]);
-    const [listState, dispatchState] = useReducer(ejReducer, [])
-    console.log(useLocation);
-    console.log(useParams);
+    const dispatch = useDispatch();
     
+    const appStore = useSelector((state: State) => state.favorites);
+    console.log(appStore);
+
     useEffect(() => {
         const fetchBooks = async () => {
             const res = await axios.get(
                 `https://api.nytimes.com/svc/books/v3/lists/current/hardcover-fiction.json?api-key=hnlwaKq3JgG8kFoP8ltAlrmSKAIi4ADH`
             )
             setBooks(res.data.results.books);
+            //dispatchState({type: "set_list", payload: res.data});
             console.log(res.data.results.books);
         }
         fetchBooks();
@@ -32,14 +34,21 @@ const Books = (props: any) => {
 
     }
 
-    const incrementarLikes = (title: string, cantidad: number) => {
-
+    const addFav = (title: string) => {
+        console.log(title);
+        dispatch({type: ReducerTypes.ADD, payload: title});
+    
     }
-    const decrementarLikes = (title: string, cantidad: number) => {
-        
+    const removeFav = (title: string) => {
+        console.log(title);
+        dispatch({type: ReducerTypes.BORRAR, payload: title});
+    
     }
     return (
         <div>
+            <List
+            dataSource={books}
+            >
             <h1 className="font-bold text-center text-4xl py-10">Ranking de los 15 mejores libros</h1>
             <section className="grid grid-cols-1 gap-10 px-5 text-center">
                 {books.map((book: BookList) => {
@@ -52,7 +61,9 @@ const Books = (props: any) => {
                         primary_isbn10, 
                         publisher, 
                         rank, 
-                        title
+                        title,
+                        likes,
+                        dislikes
                     } = book;
 
                     return (
@@ -75,12 +86,21 @@ const Books = (props: any) => {
                             <Link to={`/books/${title}`} onClick={() => console.log("btn a libro")}> Ver más</Link>
              
                         <br />
-                        {/* <button onClick={() => incrementarLikes(title)}>+1</button>
-                        <button onClick={() => decrementarLikes(title)}>-1</button> */}
+                         {appStore.findIndex((book: BookList) => book.title !== title) === -1 ?
+                            <Button
+                            onClick={() => addFav(title)}
+                         >Favoritos</Button>
+                         :
+                         <Button
+                            onClick={() => removeFav(title)}
+                         >sacar de FAvoritos</Button>
+                        }
                         </article>
                     )
                 })}
             </section>
+            </List>
+            
         </div>
     )
 }
